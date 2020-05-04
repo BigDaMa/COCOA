@@ -1,5 +1,4 @@
 import vertica_python
-from basics import *
 import numpy as np
 import scipy.stats as ss
 import time
@@ -20,6 +19,16 @@ def generate_inverted_index():
 
     table_ids_query = 'CREATE TABLE tbl_inverted_index DIRECT AS SELECT /*+DIRECT*/ tokenized, LISTAGG (tableid||colid||rowid) from main_tokenized_union;'
     cur.execute(table_ids_query)
+
+
+def is_numeric_list(l):
+    for i in np.arange(len(l)):
+        if l[i] is None:
+            l[i] = np.nan
+        else:
+            l[i] = l[i]
+    result = [s for s in l if is_number(str(s))]
+    return len(result) == len(l)
 
 
 def generate_order_index():
@@ -53,7 +62,7 @@ def generate_order_index():
                     if column_content[i][1] is None:
                         column_content[i][1] = np.nan
                 rows = [i[0] for i in column_content]
-                values = [i[1] for i in column_content]
+                values = [float(i[1]) for i in column_content]
                 ranks = ss.rankdata(values)
 
                 rows_sorted_based_on_ranks = [x for _,x in sorted(zip(ranks,rows))]
