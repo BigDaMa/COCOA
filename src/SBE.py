@@ -77,7 +77,7 @@ def spearmans_correlation(x, y):
     return correlation[0]
 
 
-def enrich_SBE(dataset_name, data_path, query_column, target_column, k_c, k_t):
+def enrich_SBE(dataset_name, query_column, target_column, k_c, k_t):
     conn_info = {'host': '127.0.0.1',
                  'port': 5433,
                  'user': 'USERNAME',
@@ -105,7 +105,7 @@ def enrich_SBE(dataset_name, data_path, query_column, target_column, k_c, k_t):
     result = pd.DataFrame(cur.fetchall(), columns=['tableid', 'max_col_id'])
     max_column_dict = result.set_index('tableid').to_dict()['max_col_id']
 
-    data = get_dataset(data_path, use_default_path=False)[[query_column] + [target_column]]
+    data = get_dataset(dataset_name)[[query_column] + [target_column]]
     data[query_column] = data[query_column].apply(lambda x: get_cleaned_text(x))
 
     data[target_column] = data[target_column].astype('float')
