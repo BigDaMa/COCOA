@@ -7,7 +7,7 @@ import re
 
 
 def get_dataset(file_name, use_default_path = True):
-    base_url = '../datasets/'
+    base_url = '../dataset/'
     if use_default_path:
         file = pd.read_csv(base_url+file_name+'.csv', sep=',')
     else:
@@ -111,7 +111,7 @@ def enrich_COCOA(dataset_name, data_path, query_column, target_column, k_c, k_t)
     result = pd.DataFrame(cur.fetchall(), columns=['tableid', 'max_col_id'])
     max_column_dict = result.set_index('tableid').to_dict()['max_col_id']
 
-    data = get_dataset(data_path, use_default_path=False)[[query_column] + [target_column]]
+    data = get_dataset(dataset_name)[[query_column] + [target_column]]
     data[query_column] = data[query_column].apply(lambda x: get_cleaned_text(x))
 
     data['rank_target'] = generate_rank(data[target_column])
