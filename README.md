@@ -21,4 +21,4 @@ generate_order_index()
 
 enrich_COCOA('Movie', 'movie_title', 'imdb_score', 50, 1000)
 ``` 
-Parameters of enrich_COCOA function are name of the dataset, query column, target column (ML model. Prediction column), the number of final columns to enrich the input dataset with, and the number of external tables to fetch and look for the best correlating columns in.
+Parameters of enrich_COCOA function are name of the dataset, query column, target column (ML model. Prediction column), the number of final columns to enrich the input dataset with, and the number of external tables to fetch and to look for the best correlating columns in.
