@@ -35,7 +35,7 @@ def get_cleaned_text(text):
 
 
 def get_overlappings(k, file_path, query_column):
-    conn_info = {'host': '127.0.0.1',
+    conn_info = {'host': 'SERVER_IP_ADDRESS',
                  'port': 5433,
                  'user': 'USERNAME',
                  'password': 'PASSWORD',
@@ -78,7 +78,7 @@ def spearmans_correlation(x, y):
 
 
 def enrich_SBE(dataset_name, query_column, target_column, k_c, k_t):
-    conn_info = {'host': '127.0.0.1',
+    conn_info = {'host': 'SERVER_IP_ADDRESS',
                  'port': 5433,
                  'user': 'USERNAME',
                  'password': 'PASSWORD',
