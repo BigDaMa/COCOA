@@ -5,7 +5,7 @@ import time
 
 
 def generate_inverted_index():
-    conn_info = {'host': '127.0.0.1',
+    conn_info = {'host': 'SERVER_IP_ADDRESS',
                  'port': 5433,
                  'user': 'USERNAME',
                  'password': 'PASSWORD',
@@ -32,7 +32,7 @@ def is_numeric_list(l):
 
 
 def generate_order_index():
-    conn_info = {'host': '127.0.0.1',
+    conn_info = {'host': 'SERVER_IP_ADDRESS',
                  'port': 5433,
                  'user': 'USERNAME',
                  'password': 'PASSWORD',
