@@ -7,7 +7,7 @@ import re
 
 
 def get_dataset(file_name, use_default_path = True):
-    base_url = '../dataset/'
+    base_url = '../datasets/'
     if use_default_path:
         file = pd.read_csv(base_url+file_name+'.csv', sep=',')
     else:
@@ -83,7 +83,7 @@ def get_overlappings(k, file_path, query_column):
     return result
 
 
-def enrich_COCOA(dataset_name, data_path, query_column, target_column, k_c, k_t):
+def enrich_COCOA(dataset_name, query_column, target_column, k_c, k_t):
     conn_info = {'host': '127.0.0.1',
                  'port': 5433,
                  'user': 'USERNAME',
@@ -117,6 +117,9 @@ def enrich_COCOA(dataset_name, data_path, query_column, target_column, k_c, k_t)
     data['rank_target'] = generate_rank(data[target_column])
     data['rank_target'] = data['rank_target'].astype('int64')
     input_size = len(data)
+    target_ranks = np.array(data['rank_target'])
+    std_target_rank = np.std(target_ranks)
+    target_rank_sum = sum(target_ranks)
 
     column_name = []
     column_correlation = []
@@ -177,50 +180,94 @@ def enrich_COCOA(dataset_name, data_path, query_column, target_column, k_c, k_t)
         joinMap = generate_join_map(data[query_column], joinable_tables_dict[str(table) + '_' + str(column)])
 
         for c in np.arange(max_col + 1):
+            is_data_numeric = True
             if '{}_{}'.format(table, column) not in numerics_dict or c not in numerics_dict['{}_{}'.format(table, column)]:
-                continue
+                is_data_numeric = False
             if c == column:
                 continue
 
-            data['new_external_rank'] = math.ceil(input_size / 2)
-            external_rank = data['new_external_rank'].values
-            data['new_external_content'] = ""
-            external_content = data['new_external_content'].values
+            if is_data_numeric:
+                data['new_external_rank'] = math.ceil(input_size / 2)
+                external_rank = data['new_external_rank'].values
+                data['new_external_content'] = ""
+                external_content = data['new_external_content'].values
 
-            order_index = order_dict['{}_{}'.format(table, c)]
-            binary_index = binary_dict['{}_{}'.format(table, c)]
-            starting_point = min_dict['{}_{}'.format(table, c)]
-            content_list = np.array(list(content_dict['{}_{}'.format(table, c)]))
+                order_index = order_dict['{}_{}'.format(table, c)]
+                binary_index = binary_dict['{}_{}'.format(table, c)]
+                starting_point = min_dict['{}_{}'.format(table, c)]
+                content_list = np.array(list(content_dict['{}_{}'.format(table, c)]))
 
-            order = order_index.split(', [')[1][:-2].split(', ')
-            order = [int(x) for x in order]
+                order = order_index.split(', [')[1][:-2].split(', ')
+                order = [int(x) for x in order]
 
-            binary = binary_index.split(', [')[1][:-2].split(', ')
-            pointer = starting_point
+                pointer = starting_point
 
-            assignment_flag = False
-            counter = 1
-            skipped = 1
-            while pointer != -1:
-                input_index = joinMap[pointer]
-                if input_index != -1:
-                    external_rank[input_index] = counter
-                    assignment_flag = True
-                    external_content[input_index] = str(content_list[pointer])
-                if binary[pointer] == 'T':
-                    if assignment_flag:
-                        counter += skipped
-                        skipped = 1
-                        assignment_flag = False
-                    else:
-                        skipped += 1
-                next = order[pointer]
-                pointer = next
+                counter = 1
+                jump_flag = False
+                current_counter_assigned = False
+                while pointer != -1:
+                    if jump_flag and current_counter_assigned:
+                        counter += 1
+                        jump_flag = False
+                        current_counter_assigned = False
+                    input_index = joinMap[pointer]
+                    if input_index != -1:
+                        external_rank[input_index] = counter
+                        current_counter_assigned = True
+                        external_content[input_index] = str(content_list[pointer])
 
-            cor = np.corrcoef(data['rank_target'], external_rank)[0, 1]
-            column_name += [str(table) + '_' + str(c)]
-            column_correlation += [cor]
-            column_content += [external_content.copy()]
+                    if binary_index[pointer] == 'T':
+                        jump_flag = True
+
+                    next = order[pointer]
+                    pointer = next
+
+                cor = np.corrcoef(data['rank_target'], external_rank)[0, 1]
+                column_name += [str(table) + '_' + str(c)]
+                column_correlation += [cor]
+                column_content += [external_content.copy()]
+            else:
+                data['new_external_content'] = ""
+                external_content = data['new_external_content'].values
+
+                content_list = np.array(list(content_dict['{}_{}'.format(table, c)]))
+                min_index, order_index, bool_index = create_order_index(list(content_list))
+
+                starting_point = min_index
+                order = order_index
+                order = [int(x) for x in order]
+                binary_index = bool_index
+                pointer = starting_point
+                max_correlation = 0
+                ohe_sum = 0
+                ohe_qty = 0
+                jump_flag = False
+                while pointer != -1:
+                    if jump_flag and ohe_qty > 1:
+                        correlation = ((input_size * ohe_sum) - (ohe_qty * target_rank_sum)) / (
+                                std_target_rank * input_size * math.sqrt((ohe_qty * (input_size - ohe_qty))))
+                        if abs(correlation) > max_correlation:
+                            max_correlation = abs(correlation)
+                        ohe_qty = 0
+                        ohe_sum = 0
+                        jump_flag = False
+
+                    input_index = joinMap[pointer]
+                    if input_index != -1:
+                        ohe_sum += target_ranks[input_index]
+                        ohe_qty += 1
+                        external_content[input_index] = str(content_list[pointer])
+
+                    if binary_index[pointer] == 'T':
+                        jump_flag = True
+
+                    next = order[pointer]
+                    pointer = next
+                cor = max_correlation
+
+                column_name += [str(table) + '_' + str(c)]
+                column_correlation += [cor]
+                column_content += [external_content.copy()]
 
     overall_list = []
     for i in np.arange(len(column_correlation)):
