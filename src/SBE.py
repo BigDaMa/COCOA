@@ -151,15 +151,29 @@ def enrich_SBE(dataset_name, query_column, target_column, k_c, k_t):
         df_cd = pd.read_csv('temp_{}_{}.csv'.format(dataset_name, k_t))
 
         for c in range(max_col + 1):
+            is_data_numeric = True
             if '{}_{}'.format(table, column) not in numerics_dict or c not in numerics_dict['{}_{}'.format(table, column)]:
+                is_data_numeric = False
+            if c == column:
                 continue
-            if c != column:
 
-                column_to_be_added = df_cd[str(c)]
+            column_to_be_added = df_cd[str(c)]
 
+            if is_data_numeric:
                 cor = abs(spearmans_correlation(data[target_column], column_to_be_added))
                 column_name += [str(table) + '_' + str(c)]
                 column_correlation += [cor]
+                column_content += [column_to_be_added.copy()]
+            else:
+                dummies = pd.get_dummies(column_to_be_added.copy(), prefix='{}_{}_{}'.format(table, column, c))
+                max_corr = 0
+                for dum in dummies.columns.values:
+                    cor = abs(spearmans_correlation(data[target_column], dummies[dum]))
+                    if max_corr < cor:
+                        max_corr = cor
+
+                column_name += [str(table) + '_' + str(c)]
+                column_correlation += [max_corr]
                 column_content += [column_to_be_added.copy()]
 
     overall_list = []
@@ -172,6 +186,3 @@ def enrich_SBE(dataset_name, query_column, target_column, k_c, k_t):
 
     connection.close()
     return data
-
-
-
