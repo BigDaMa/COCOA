@@ -83,7 +83,7 @@ def get_overlappings(k, file_path, query_column):
     return result
 
 
-def enrich_AugX(dataset_name, query_column, target_column, k_c, k_t):
+def enrich_COCOA(dataset_name, query_column, target_column, k_c, k_t):
     conn_info = {'host': 'SERVER_IP_ADDRESS',
                  'port': 5433,
                  'user': 'USERNAME',
