@@ -13,9 +13,5 @@ generate_inverted_index()
 generate_order_index()
 
 enrich_COCOA('movie', 'movie_title', 'imdb_score', 50, 10000)
-enrich_COCOA('pageviews', 'name', 'visit', 50, 10000)
-enrich_COCOA('presidential', 'County', 'Votets', 50, 10000)
-enrich_COCOA('universities', 'name', 'target', 50, 10000)
-enrich_COCOA('worldcitiespop', 'City', 'Population', 50, 10000)
 ``` 
 Parameters of enrich_COCOA function are name of the dataset, the query column, the target column (the ML model. Prediction column), the number of final columns to enrich the input dataset with, and the number of external tables to fetch and to look for the best correlating columns in.
