@@ -75,14 +75,14 @@ every column in the dataset.
 ## Installation
 Run the following command to install COCOA to your python environment:
 ```
-pip install cocoa
+pip install cocoa-system
 ```
 
 ## Usage
 ```python
 import pandas as pd
 import psycopg2
-from cocoa-system import DataAugmentation
+from cocoa_system import DataAugmentation
 
 CONN_INFO = {
     'host': '127.0.0.1',
